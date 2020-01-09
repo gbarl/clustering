@@ -116,8 +116,8 @@ def select_points_scatter(data,X = 'X', Y = 'Y', hue = 'hue',factor_type = 'cate
 def show_cells_on_stack(data,stack,X='X',Y='Y',channelNames = None,
                         group = 'group',hue = 'hue',palette = 'Spectral11',
                         default = 0, alpha = .5,
-                        stack_dw = None,stack_dh = None,
-                        plot_width = 400,plot_height = 400,
+                  
+                        plot_width = 500,plot_height = 500,
                        vmin = 0,vmax = 3,znorm = True):
     
     '''
@@ -128,8 +128,9 @@ def show_cells_on_stack(data,stack,X='X',Y='Y',channelNames = None,
         channelNames = ['Channel '+str(i) for i in range(len(stack))]
         print (channelNames)
     
+    
     s1 = ColumnDataSource(data=data)
-    p1 = figure(plot_width=plot_width, plot_height=plot_height, tools="pan,wheel_zoom,lasso_select,reset")
+    p1 = figure(plot_width=plot_width, plot_height=plot_height, tools="pan,wheel_zoom,reset")
     
 
     channels = {}  
@@ -138,20 +139,24 @@ def show_cells_on_stack(data,stack,X='X',Y='Y',channelNames = None,
         if znorm:
             img = (img-img.mean())/img.std()
         
-        if not stack_dw:
-            stack_dw = plot_width
-        if not stack_dh:
-            stack_dh = plot_height
+       
             
-        channels[i] =  p1.image(image = [img],x = [0],y = [0],dw = [stack_dw],dh = [stack_dh],
+        channels[i] =  p1.image(image = [img],x = [0],y = [0],dw = [plot_width],dh = [plot_height],
                                 color_mapper = LogColorMapper(palette = palette,low = vmin,high = vmax),
             global_alpha = alpha,visible =(i==default))
         
     plots = {}
+    #scaled_coordinates to fit in stack_dw,stack_dh
+    dh_ratio = plot_height/img.shape[0]
+    dw_ratio = plot_width/img.shape[1]
+    
+    data['warped_X'] = data[X]*dw_ratio
+    data['warped_Y'] = data[Y]*dh_ratio
+    
     groups = list(data[group].unique())
     for g_id in groups:
         s2 = ColumnDataSource(data = data[data[group]==g_id])
-        scatter  = p1.circle(X, Y, source=s2, alpha = 1,color = 'hue')#,legend_label = str(g_id))
+        scatter  = p1.circle('warped_X','warped_Y', source=s2, alpha = 1,color = 'hue')#,legend_label = str(g_id))
         scatter.visible = False
         plots[g_id] = scatter
     
@@ -204,7 +209,7 @@ def show_cells_on_stack(data,stack,X='X',Y='Y',channelNames = None,
     
   
 
-    layout = row(p1,column(select_celltype,select_channel))
+    layout = column(p1,select_celltype,select_channel)
     show(layout)
 
     

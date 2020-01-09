@@ -61,7 +61,7 @@ class SingleExperiment (object):
             channelNames_path = '/'.join(bestFocus_path.split('/')[:-2])+'/channelNames.txt'
             self.channelNames = list(pd.read_csv(channelNames_path,header = None).values[:,0]) 
     
-        montages = [k for k in os.listdir(bestFocus_path) if 'montage' in k] 
+        montages = [k for k in os.listdir(bestFocus_path) if '.tif' in k] 
         if len(montages)==0:
             print ("could not find any regions with montage. If you don't want montages change argument 'only_montages' to 'False'")
             return
@@ -160,10 +160,11 @@ class SetExperiment(object):
             subset['rescaled_y'] = subset[self.Y]
 
 
-
+        spillover_X = max(0,0-(X-window_size))
+        spillover_Y = max(0,0-(Y-window_size))
         crop = subset.query('@X-@window_size<rescaled_x<@X+@window_size and @Y-@window_size<rescaled_y<@Y+@window_size')
-        crop['rescaled_x'] = crop['rescaled_x'].values-X+window_size
-        crop['rescaled_y'] = crop['rescaled_y'].values-Y+window_size
+        crop['rescaled_x'] = crop['rescaled_x'].values-X+window_size - spillover_X
+        crop['rescaled_y'] = crop['rescaled_y'].values-Y+window_size - spillover_Y
         
         
         return crop
